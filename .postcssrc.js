@@ -1,0 +1,22 @@
+// // postcss.config.js
+// module.exports = {
+//   plugins: {
+//     'postcss-pxtorem': {
+//       rootValue: 37.5,
+//       propList: ['*']
+//     }
+//   }
+// }
+// postcss.config.js
+module.exports = {
+  plugins: {
+    // postcss-pxtorem 插件的版本需要 >= 5.0.0
+    'postcss-pxtorem': {
+      rootValue ({ file }) {
+        console.log(file)
+        return file.indexOf('vant') !== -1 ? 37.5 : 75
+      },
+      propList: ['*']
+    }
+  }
+}
