@@ -1,8 +1,31 @@
 <template>
-  <div class="login-container">登录页面</div>
+  <div class="login-container">
+    <van-nav-bar title="登录" />
+    <van-form @submit="onSubmit" ref="form">
+      <van-cell-group inset>
+        <van-field v-model="mobile" type='number' name="mobile" placeholder="请输入手机号" :rules="userFormRules.mobile" maxlength="11">
+          <i slot="left-icon" class="iconfont icon-shumashouji"></i>
+        </van-field>
+        <van-field v-model="code" type="number" name="code" placeholder="请输入验证码" :rules="userFormRules.code" maxlength="6" >
+          <i slot="left-icon" class="iconfont icon-yanzhengma"></i>
+          <template #button>
+            <van-count-down v-if="isCountDownShow" :time="1000*5" format="ss s" @finish="isCountDownShow=false" style="height:32px" />
+            <van-button v-else class="send-sms-btn" round size="small" type="primary" native-type="button" @click="onSendsms">发送验证码</van-button>
+          </template>
+        </van-field>
+      </van-cell-group>
+      <div style="margin: 16px;">
+        <van-button round block type="info" native-type="submit">
+          登录
+        </van-button>
+      </div>
+    </van-form>
+  </div>
 </template>
 
 <script>
+import { login } from '@/api/user.js'
+
 export default {
   // 组件名称
   name: 'login',
@@ -12,69 +35,108 @@ export default {
   components: {},
   // 组件状态值
   data () {
-    return {}
+    return {
+      mobile: '',
+      code: '',
+      userFormRules: {
+        mobile: [
+          { required: true, message: '请输入手机号' },
+          { pattern: /^(\(\d{3,4}\)|\d{3,4}-|\s)?\d{7,14}$/, message: '手机号格式错误' }
+        ],
+        code: [
+          { required: true, message: '请输入验证码' },
+          { pattern: /^\d{6}$/, message: '验证码格式错误' }
+        ]
+      },
+      isCountDownShow: false
+    }
   },
   // 计算属性
   computed: {},
   // 侦听器
   watch: {},
   // 组件方法
-  methods: {},
+  methods: {
+    async onSubmit () {
+      const user = {
+        mobile: this.mobile,
+        code: this.code
+      }
+      console.log(user)
+      this.$toast.loading({
+        message: '登录中...',
+        forbidClick: true,
+        duration: 0
+      })
+      try {
+        const res = await login(user)
+        console.log('成功', res)
+      } catch (error) {
+        console.log('错误', error)
+      }
+      /// 将登录信息保存到Vuex中
+      this.$store.commit('setToken', user)
+      // 显示登录成功
+      setTimeout(() => {
+        this.$toast.success('登录成功')
+      }, 3000)
+    },
+    async onSendsms () {
+      try {
+        await this.$refs.form.validate('mobile')
+        console.log('验证成功')
+      } catch (error) {
+        return console.log('发送失败', error)
+      }
+
+      this.isCountDownShow = true
+    }
+  },
   // 以下是生命周期钩子   注：没用到的钩子请自行删除
   /**
-  * 在实例初始化之后，组件属性计算之前，如data属性等
-  */
-  beforeCreate () {
-  },
+   * 在实例初始化之后，组件属性计算之前，如data属性等
+   */
+  beforeCreate () {},
   /**
-  * 组件实例创建完成，属性已绑定，但DOM还未生成，$ el属性还不存在
-  */
-  created () {
-  },
+   * 组件实例创建完成，属性已绑定，但DOM还未生成，$ el属性还不存在
+   */
+  created () {},
   /**
-  * 在挂载开始之前被调用：相关的 render 函数首次被调用。
-  */
-  beforeMount () {
-  },
+   * 在挂载开始之前被调用：相关的 render 函数首次被调用。
+   */
+  beforeMount () {},
   /**
-  * el 被新创建的 vm.$ el 替换，并挂载到实例上去之后调用该钩子。
-  * 如果 root 实例挂载了一个文档内元素，当 mounted 被调用时 vm.$ el 也在文档内。
-  */
-  mounted () {
-  },
+   * el 被新创建的 vm.$ el 替换，并挂载到实例上去之后调用该钩子。
+   * 如果 root 实例挂载了一个文档内元素，当 mounted 被调用时 vm.$ el 也在文档内。
+   */
+  mounted () {},
   /**
-  * 数据更新时调用，发生在虚拟 DOM 重新渲染和打补丁之前。
-  * 你可以在这个钩子中进一步地更改状态，这不会触发附加的重渲染过程。
-  */
-  beforeUpdate () {
-  },
+   * 数据更新时调用，发生在虚拟 DOM 重新渲染和打补丁之前。
+   * 你可以在这个钩子中进一步地更改状态，这不会触发附加的重渲染过程。
+   */
+  beforeUpdate () {},
   /**
-  * 由于数据更改导致的虚拟 DOM 重新渲染和打补丁，在这之后会调用该钩子。
-  * 当这个钩子被调用时，组件 DOM 已经更新，所以你现在可以执行依赖于 DOM 的操作。
-  */
-  updated () {
-  },
+   * 由于数据更改导致的虚拟 DOM 重新渲染和打补丁，在这之后会调用该钩子。
+   * 当这个钩子被调用时，组件 DOM 已经更新，所以你现在可以执行依赖于 DOM 的操作。
+   */
+  updated () {},
   /**
-  * keep-alive 组件激活时调用。 仅针对keep-alive 组件有效
-  */
-  activated () {
-  },
+   * keep-alive 组件激活时调用。 仅针对keep-alive 组件有效
+   */
+  activated () {},
   /**
-  * keep-alive 组件停用时调用。 仅针对keep-alive 组件有效
-  */
-  deactivated () {
-  },
+   * keep-alive 组件停用时调用。 仅针对keep-alive 组件有效
+   */
+  deactivated () {},
   /**
-  * 实例销毁之前调用。在这一步，实例仍然完全可用。
-  */
-  beforeDestroy () {
-  },
+   * 实例销毁之前调用。在这一步，实例仍然完全可用。
+   */
+  beforeDestroy () {},
   /**
-  * Vue 实例销毁后调用。调用后，Vue 实例指示的所有东西都会解绑定，
-  * 所有的事件监听器会被移除，所有的子实例也会被销毁。
-  */
-  destroyed () {
-  }
+   * Vue 实例销毁后调用。调用后，Vue 实例指示的所有东西都会解绑定，
+   * 所有的事件监听器会被移除，所有的子实例也会被销毁。
+   */
+  destroyed () {}
 }
 </script>
 
@@ -82,6 +144,14 @@ export default {
 <!--使用了scoped属性之后，父组件的style样式将不会渗透到子组件中，-->
 <!--然而子组件的根节点元素会同时被设置了scoped的父css样式和设置了scoped的子css样式影响，-->
 <!--这么设计的目的是父组件可以对子组件根元素进行布局。-->
-<style scoped>
-
+<style scoped lang="less">
+.login-container {
+  .iconfont {
+    font-size: 34px;
+  }
+  .send-sms-btn{
+    background-color: #ededed;
+    color: #666;
+  }
+}
 </style>
